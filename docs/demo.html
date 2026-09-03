@@ -1,0 +1,321 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cybwaylog — Interactive Activity-Audit Demo</title>
+<style>
+:root{
+  --ground:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --ink:#0f1a26;
+  --muted:#5a6b7d; --line:#dce2ea; --accent:#0e7fb8;
+  --high:#c0362c; --med:#b0741a; --low:#4a6785; --pass:#1f7a4d;
+  --high-soft:#f8e6e4; --med-soft:#f7edda; --pass-soft:#e2f1ea;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#0d141d; --surface:#141d28; --surface-2:#1a2634; --ink:#e7eef6;
+  --muted:#93a4b8; --line:#26333f; --accent:#38bdf8;
+  --high:#f2645a; --med:#e0a13c; --low:#8299b8; --pass:#48c98a;
+  --high-soft:#2a1614; --med-soft:#2a2011; --pass-soft:#12271d;}}
+:root[data-theme="dark"]{
+  --ground:#0d141d; --surface:#141d28; --surface-2:#1a2634; --ink:#e7eef6;
+  --muted:#93a4b8; --line:#26333f; --accent:#38bdf8;
+  --high:#f2645a; --med:#e0a13c; --low:#8299b8; --pass:#48c98a;
+  --high-soft:#2a1614; --med-soft:#2a2011; --pass-soft:#12271d;}
+:root[data-theme="light"]{
+  --ground:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --ink:#0f1a26;
+  --muted:#5a6b7d; --line:#dce2ea; --accent:#0e7fb8;
+  --high:#c0362c; --med:#b0741a; --low:#4a6785; --pass:#1f7a4d;
+  --high-soft:#f8e6e4; --med-soft:#f7edda; --pass-soft:#e2f1ea;}
+*{box-sizing:border-box} body{margin:0}
+.root{--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  background:var(--ground); color:var(--ink); font-family:var(--sans);
+  line-height:1.55; padding:32px 20px; -webkit-font-smoothing:antialiased;}
+.wrap{max-width:1180px; margin:0 auto; display:flex; flex-direction:column; gap:20px}
+.label{font-family:var(--mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px}
+.head{border-bottom:1px solid var(--line); padding-bottom:18px; display:flex; flex-direction:column; gap:6px}
+.head h1{font-size:29px; font-weight:680; margin:0; letter-spacing:-.01em}
+.head .sub{color:var(--muted); font-size:14px; max-width:76ch}
+.privacy{display:flex; align-items:center; gap:10px; background:var(--pass-soft); color:var(--pass);
+  border:1px solid color-mix(in srgb,var(--pass) 30%,transparent); border-radius:10px; padding:11px 15px;
+  font-size:13px; font-weight:600}
+.privacy .d{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none}
+.grid{display:grid; grid-template-columns:minmax(0,390px) minmax(0,1fr); gap:20px; align-items:start}
+@media (max-width:860px){.grid{grid-template-columns:1fr}}
+.panel{padding:18px; display:flex; flex-direction:column; gap:16px}
+.panel h2{font-size:13px; font-family:var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--muted); margin:0}
+.fg{display:flex; flex-direction:column; gap:10px}
+.fg .gl{font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); font-weight:700}
+.field{display:flex; align-items:center; justify-content:space-between; gap:12px; font-size:13.5px}
+.field label{flex:1; cursor:pointer}
+.field .rid{font-family:var(--mono); font-size:10.5px; color:var(--muted)}
+.tog{position:relative; width:42px; height:23px; flex:none}
+.tog input{opacity:0; width:0; height:0; position:absolute}
+.tog .sl{position:absolute; inset:0; background:var(--line); border-radius:999px; cursor:pointer; transition:.15s}
+.tog .sl::before{content:""; position:absolute; width:17px; height:17px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.15s}
+.tog input:checked + .sl{background:var(--high)}
+.tog input:checked + .sl::before{transform:translateX(19px)}
+.tog input:focus-visible + .sl{outline:2px solid var(--accent); outline-offset:2px}
+.actions{display:flex; gap:9px; flex-wrap:wrap}
+.btn{font-family:var(--mono); font-size:12px; padding:8px 13px; border-radius:8px; border:1px solid var(--line);
+  background:var(--surface-2); color:var(--ink); cursor:pointer; font-weight:600}
+.btn.p{background:var(--accent); color:#fff; border-color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+.note{font-size:12px; color:var(--muted); border-top:1px solid var(--line); padding-top:12px}
+.results{display:flex; flex-direction:column; gap:16px}
+.summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(115px,1fr)); gap:10px}
+.kpi{padding:14px; display:flex; flex-direction:column; gap:5px}
+.kpi .v{font-size:24px; font-weight:680; font-family:var(--mono); font-variant-numeric:tabular-nums; line-height:1}
+.kpi .v.warn{color:var(--high)} .kpi .v.ok{color:var(--pass)} .kpi .v.accent{color:var(--accent)}
+.kpi .cap{font-size:11.5px; color:var(--muted)}
+.find{display:flex; flex-direction:column; gap:9px}
+.f{display:grid; grid-template-columns:5px 1fr; overflow:hidden; border:1px solid var(--line); border-radius:10px; background:var(--surface)}
+.f .stripe{background:var(--low)}
+.f.high .stripe{background:var(--high)} .f.medium .stripe{background:var(--med)} .f.low .stripe{background:var(--low)}
+.f .b{padding:12px 15px; display:flex; flex-direction:column; gap:8px; min-width:0}
+.f .top{display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+.f .rid{font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:600}
+.f .title{font-weight:600; font-size:14px; flex:1; min-width:190px}
+.pill{font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; padding:3px 8px; border-radius:999px; font-weight:700; white-space:nowrap}
+.pill.high{color:var(--high); background:var(--high-soft)} .pill.medium{color:var(--med); background:var(--med-soft)}
+.pill.low{color:var(--low); background:var(--surface-2)}
+.pill.risk{color:var(--muted); background:var(--surface-2)}
+.pill.gate{color:var(--accent); background:var(--surface-2); border:1px dashed var(--accent)}
+.pill.corr{color:var(--high); background:var(--high-soft); border:1px solid var(--high)}
+.ev{font-family:var(--mono); font-size:11.5px; background:var(--surface-2); border:1px solid var(--line); padding:7px 10px; border-radius:6px; overflow-wrap:anywhere}
+.resp{font-size:12.5px; background:var(--surface-2); border:1px solid var(--line); border-radius:7px; padding:8px 11px}
+.resp b{font-family:var(--mono); font-size:10px; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); display:block; margin-bottom:3px}
+.refs{display:flex; flex-wrap:wrap; gap:6px}
+.refs .r{font-family:var(--mono); font-size:10.5px; color:var(--muted)}
+.refs .r::before{content:"§ "}
+.quiet{padding:26px; text-align:center; color:var(--pass); background:var(--pass-soft);
+  border:1px solid color-mix(in srgb,var(--pass) 30%,transparent); border-radius:10px; font-size:14px; font-weight:600}
+.foot{border-top:1px solid var(--line); padding-top:16px; color:var(--muted); font-size:12px; display:flex; flex-direction:column; gap:5px}
+.foot b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="root"><div class="wrap">
+  <header class="head">
+    <span class="label">Governed-AI database activity auditor · interactive demo</span>
+    <h1>Cybwaylog</h1>
+    <span class="sub">Inject suspicious activity into a synthetic Oracle-style audit trail on the left.
+      The 14 NIST&nbsp;SP&nbsp;800-53 / MITRE&nbsp;ATT&amp;CK-mapped detection rules re-run instantly on the right,
+      ordered the way the triage agent ranks them — the same rule logic the full tool uses.</span>
+  </header>
+
+  <div class="privacy"><span class="d"></span>Runs entirely in your browser. No data leaves this page, no account, no API key, no cost. All values are synthetic.</div>
+
+  <div class="grid">
+    <form class="panel card" id="cfg" aria-label="Inject activity">
+      <h2>Inject activity into the audit trail</h2>
+
+      <div class="fg">
+        <span class="gl">Authentication</span>
+        <div class="field"><label for="i1">Off-hours logon by a DBA account <span class="rid">CYL-001</span></label>
+          <span class="tog"><input type="checkbox" id="i1"><span class="sl"></span></span></div>
+        <div class="field"><label for="i2">Failed-logon burst (8 failures in 5 min) <span class="rid">CYL-002</span></label>
+          <span class="tog"><input type="checkbox" id="i2"><span class="sl"></span></span></div>
+        <div class="field"><label for="i5">Dormant account reactivated (120 days) <span class="rid">CYL-005</span></label>
+          <span class="tog"><input type="checkbox" id="i5"><span class="sl"></span></span></div>
+        <div class="field"><label for="i8">Logon from a never-before-seen host <span class="rid">CYL-008</span></label>
+          <span class="tog"><input type="checkbox" id="i8"><span class="sl"></span></span></div>
+        <div class="field"><label for="i13">Service account used interactively <span class="rid">CYL-013</span></label>
+          <span class="tog"><input type="checkbox" id="i13"><span class="sl"></span></span></div>
+      </div>
+
+      <div class="fg">
+        <span class="gl">Privilege</span>
+        <div class="field"><label for="i3">New administrative grant (DBA to a user) <span class="rid">CYL-003</span></label>
+          <span class="tog"><input type="checkbox" id="i3"><span class="sl"></span></span></div>
+        <div class="field"><label for="i7">High-privilege action by a non-DBA <span class="rid">CYL-007</span></label>
+          <span class="tog"><input type="checkbox" id="i7"><span class="sl"></span></span></div>
+      </div>
+
+      <div class="fg">
+        <span class="gl">Data access</span>
+        <div class="field"><label for="i4">Mass export (1.85M rows vs 101 baseline) <span class="rid">CYL-004</span></label>
+          <span class="tog"><input type="checkbox" id="i4"><span class="sl"></span></span></div>
+        <div class="field"><label for="i10">Repeated access to a sensitive object <span class="rid">CYL-010</span></label>
+          <span class="tog"><input type="checkbox" id="i10"><span class="sl"></span></span></div>
+      </div>
+
+      <div class="fg">
+        <span class="gl">Audit &amp; change control</span>
+        <div class="field"><label for="i6">Audit policy disabled (NOAUDIT) <span class="rid">CYL-006</span></label>
+          <span class="tog"><input type="checkbox" id="i6"><span class="sl"></span></span></div>
+        <div class="field"><label for="i9">Schema change outside a change window <span class="rid">CYL-009</span></label>
+          <span class="tog"><input type="checkbox" id="i9"><span class="sl"></span></span></div>
+        <div class="field"><label for="i12">Activity with no matching logon session <span class="rid">CYL-012</span></label>
+          <span class="tog"><input type="checkbox" id="i12"><span class="sl"></span></span></div>
+        <div class="field"><label for="i11">Session-count anomaly (41 vs median 3) <span class="rid">CYL-011</span></label>
+          <span class="tog"><input type="checkbox" id="i11"><span class="sl"></span></span></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn p" id="bad">Load a bad day</button>
+        <button type="button" class="btn" id="good">Load a quiet fortnight</button>
+      </div>
+      <p class="note"><b>CYL-014</b> is a correlation rule — it fires by itself when a mass export
+        (CYL-004) is followed by audit-off (CYL-006) within an hour. Turn both on to see it.</p>
+    </form>
+
+    <div class="results">
+      <div class="summary" id="summary"></div>
+      <div class="find" id="findings"></div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span><b>Synthetic data only.</b> Every user, host, address, and event shown was generated for testing.
+      No real database, log, credential, or organizational data. Educational/demonstration use.</span>
+    <span>A personal portfolio project by <b>V. Vikram</b> · Apache-2.0 · Defensive security only.
+      NIST SP 800-53 is a public-domain US Government work; MITRE ATT&amp;CK&reg; technique IDs are
+      referenced with attribution to The MITRE Corporation.</span>
+  </footer>
+</div></div>
+
+<script>
+"use strict";
+// Rule metadata mirrors src/cybwaylog/rules.py (ids, titles, severities, risk scores,
+// references and advisory responses are kept in sync with the Python engine).
+var RULES = [
+  {id:"CYL-001", key:"i1", sev:"medium", risk:55,
+   title:"Off-hours logon by a privileged (DBA) account",
+   ev:"event 1872: DBA_ONE_FAKE (DBA account) LOGON at 2026-07-15T02:07:12 from WS-DBA1-FAKE (10.0.1.31) via sqlplus as OS user dba1 — outside business hours (Mon-Fri 08:00-18:00) and not inside any approved change window",
+   resp:"Contact the account owner to confirm the logon; if unconfirmed, treat the credential as compromised and rotate it through change control; review every action in the session.",
+   refs:["NIST 800-53r5 AC-2(12)","NIST 800-53r5 AU-6","MITRE ATT&CK T1078 Valid Accounts"]},
+  {id:"CYL-002", key:"i2", sev:"medium", risk:50,
+   title:"Failed-logon burst (5 or more failures within 10 minutes)",
+   ev:"DBA_TWO_FAKE: 8 failed logons (return_code [1017]) between 2026-07-08T22:13:05 and 2026-07-08T22:17:52 from ['WS-TEMP-FAKE (10.0.1.99)']; events [1876…1883]",
+   resp:"Verify whether the source host is known to the account owner; check for a subsequent successful logon from the same host; consider a temporary lock.",
+   refs:["NIST 800-53r5 AC-7","NIST 800-53r5 AU-6","MITRE ATT&CK T1110 Brute Force","MITRE ATT&CK T1110.001 Brute Force: Password Guessing"]},
+  {id:"CYL-003", key:"i3", sev:"high", risk:82,
+   title:"New administrative grant or privilege-grant spike",
+   ev:"event 1886: DBA_ONE_FAKE executed GRANT ROLE DBA TO JDOE_FAKE at 2026-07-13T16:45:30 (privilege used: GRANT ANY ROLE) — new administrative grant",
+   resp:"Confirm the grant against an approved change ticket; if none exists, ask the grantor for justification and revoke through change control.",
+   refs:["NIST 800-53r5 AC-2(7)","NIST 800-53r5 AC-6(1)","MITRE ATT&CK T1098 Account Manipulation","MITRE ATT&CK T1078 Valid Accounts"]},
+  {id:"CYL-004", key:"i4", sev:"high", risk:88,
+   title:"Mass data export (rows far above the account's own baseline)",
+   ev:"event 1874: DBA_ONE_FAKE SELECT on HR_FAKE.EMPLOYEES_FAKE returned 1,850,000 rows at 2026-07-15T02:10:44 from WS-DBA1-FAKE (10.0.1.31) — the account's median SELECT is 101 rows",
+   resp:"Identify what the query returned and where the data went; confirm a business need with the data owner; if unconfirmed, open a data-loss incident.",
+   refs:["NIST 800-53r5 AU-6","NIST 800-53r5 SI-4","NIST 800-53r5 AC-23","MITRE ATT&CK T1213 Data from Information Repositories"]},
+  {id:"CYL-005", key:"i5", sev:"medium", risk:60,
+   title:"Dormant account reactivated (logon after more than 60 days idle)",
+   ev:"event 1887: OLD_SVC_FAKE LOGON at 2026-07-14T03:25:10 from legacy01.fake.test (10.0.0.19) via JDBC Thin Client after 120 days idle (previous logon 2026-03-15T14:02:00)",
+   resp:"Confirm with the account owner that the account is still needed; if not, lock it through change control; review everything it did after reactivation.",
+   refs:["NIST 800-53r5 AC-2(3)","NIST 800-53r5 IA-4","MITRE ATT&CK T1078 Valid Accounts"]},
+  {id:"CYL-006", key:"i6", sev:"high", risk:92,
+   title:"Audit-policy tampering (audit policy disabled)",
+   ev:"event 1875: DBA_ONE_FAKE executed NOAUDIT on audit policy ORA_LOGON_FAILURES at 2026-07-15T02:41:03 from WS-DBA1-FAKE (10.0.1.31) via sqlplus as OS user dba1",
+   resp:"Re-enable the policy through the emergency change process; determine who disabled it and why; assume any activity during the gap is unlogged.",
+   refs:["NIST 800-53r5 AU-9","NIST 800-53r5 AU-12","MITRE ATT&CK T1562 Impair Defenses","MITRE ATT&CK T1562.001 Impair Defenses: Disable or Modify Tools"]},
+  {id:"CYL-007", key:"i7", sev:"high", risk:85,
+   title:"High-privilege action by a non-DBA account",
+   ev:"event 1892: JDOE_FAKE (USER account) executed ALTER SYSTEM using system privilege 'ALTER SYSTEM' at 2026-07-14T09:12:47 from WS-JDOE-FAKE (10.0.1.21) via SQL Developer",
+   resp:"Determine how the account obtained the privilege; revoke it through change control if not approved; review what the privilege was used for.",
+   refs:["NIST 800-53r5 AC-6(9)","NIST 800-53r5 AC-6(10)","MITRE ATT&CK T1078 Valid Accounts","MITRE ATT&CK T1548 Abuse Elevation Control Mechanism"]},
+  {id:"CYL-008", key:"i8", sev:"medium", risk:58,
+   title:"Logon from a never-before-seen host for this account",
+   ev:"event 1893: JDOE_FAKE LOGON at 2026-07-15T11:40:05 from WS-UNKNOWN-FAKE (10.0.2.77) — host seen 1 time versus 33 logons from ['WS-JDOE-FAKE']",
+   resp:"Ask the account owner whether they used the new host; if not, treat the credential as compromised and rotate it.",
+   refs:["NIST 800-53r5 AC-2(12)","NIST 800-53r5 SI-4","MITRE ATT&CK T1078 Valid Accounts"]},
+  {id:"CYL-009", key:"i9", sev:"low", risk:35,
+   title:"Schema change (DDL) outside an approved change window",
+   ev:"event 1899: DBA_TWO_FAKE executed ALTER TABLE on APP_FAKE.ORDERS_FAKE at 2026-07-14T15:30:21 — no approved change window covers this time (approved: ['CHG-FAKE-1001','CHG-FAKE-1002'])",
+   resp:"Match the change to a ticket; if none, ask the executor for justification and review the object definition for unexpected changes.",
+   refs:["NIST 800-53r5 CM-3","NIST 800-53r5 CM-5","MITRE ATT&CK T1505.001 Server Software Component: SQL Stored Procedures"]},
+  {id:"CYL-010", key:"i10", sev:"medium", risk:62,
+   title:"Repeated access to a sensitive object by a non-owner",
+   ev:"JDOE_FAKE (not the owner HR_FAKE) accessed HR_FAKE.SALARIES_FAKE [PII/COMPENSATION] 7 times between 2026-07-13T10:02:00 and 2026-07-13T11:35:00 (490 rows in total)",
+   resp:"Confirm with the data owner whether this access is authorised; if not, revoke the object grant through change control.",
+   refs:["NIST 800-53r5 AC-3","NIST 800-53r5 AC-6","NIST 800-53r5 AU-6","MITRE ATT&CK T1213 Data from Information Repositories"]},
+  {id:"CYL-011", key:"i11", sev:"low", risk:30,
+   title:"Per-account session-count anomaly",
+   ev:"RPT_RO_FAKE: 41 logons on 2026-07-16 versus a median of 3 per active day (threshold 10); first event 1909 at 09:00:00, last 2026 at 15:30:00",
+   resp:"Check for a misbehaving script or shared credential; confirm with the account owner; if unexplained, review the sessions.",
+   refs:["NIST 800-53r5 AC-2(12)","NIST 800-53r5 AC-10","NIST 800-53r5 SI-4","MITRE ATT&CK T1078 Valid Accounts"]},
+  {id:"CYL-012", key:"i12", sev:"high", risk:75,
+   title:"Activity with no matching logon session",
+   ev:"event 2029: APP_SVC_FAKE DELETE on APP_FAKE.ORDERS_FAKE (1,200 rows) at 2026-07-10T14:22:09 in session 990001, which has no logon record in dba_audit_session",
+   resp:"Verify audit-trail integrity (gaps, purges, clock skew); check for session hijacking or injected activity; preserve the records.",
+   refs:["NIST 800-53r5 AU-10","NIST 800-53r5 AU-6","NIST 800-53r5 AU-12","MITRE ATT&CK T1070 Indicator Removal","MITRE ATT&CK T1550 Use Alternate Authentication Material"]},
+  {id:"CYL-013", key:"i13", sev:"medium", risk:52,
+   title:"Service account used interactively by a person",
+   ev:"event 2030: service account APP_SVC_FAKE LOGON at 2026-07-12T16:05:33 from app01.fake.test (10.0.0.11) via sqlplus as OS user jdoe — interactive client program on a service account",
+   resp:"Identify the person behind the OS user; rotate the service credential through change control; review what the session did.",
+   refs:["NIST 800-53r5 AC-2(7)","NIST 800-53r5 AC-6(5)","NIST 800-53r5 IA-2","MITRE ATT&CK T1078 Valid Accounts"]}
+];
+// CYL-014 is a correlation rule: it fires only when CYL-004 and CYL-006 both occur within an hour.
+var CORRELATION = {
+  id:"CYL-014", sev:"high", risk:97, requires:["i4","i6"],
+  title:"Mass export followed by audit-off within one hour (correlation)",
+  ev:"event 1874: DBA_ONE_FAKE exported 1,850,000 rows from HR_FAKE.EMPLOYEES_FAKE at 2026-07-15T02:10:44; then event 1875: DBA_ONE_FAKE executed NOAUDIT on ORA_LOGON_FAILURES at 2026-07-15T02:41:03 (30 minutes later)",
+  resp:"Treat as an active exfiltration-and-cover-up pattern: open an incident immediately; preserve all audit records; escalate to the data owner and incident response.",
+  refs:["NIST 800-53r5 AU-9","NIST 800-53r5 IR-4","NIST 800-53r5 SI-4","MITRE ATT&CK T1213 Data from Information Repositories","MITRE ATT&CK T1562 Impair Defenses","MITRE ATT&CK T1070 Indicator Removal"]
+};
+var BASELINE_EVENTS = 2032;   // events in a quiet synthetic fortnight
+
+function $(id){ return document.getElementById(id); }
+function esc(s){ return String(s).replace(/[&<>]/g, function(m){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;"}[m]; }); }
+
+function evaluate(){
+  var out = [];
+  for (var i = 0; i < RULES.length; i++){
+    var r = RULES[i];
+    if ($(r.key) && $(r.key).checked) out.push(r);
+  }
+  var all = CORRELATION.requires.every(function(k){ return $(k) && $(k).checked; });
+  if (all) out.push(CORRELATION);
+  out.sort(function(a,b){ return b.risk - a.risk; });
+  return out;
+}
+
+function render(){
+  var found = evaluate();
+  var high = found.filter(function(d){ return d.sev === "high"; }).length;
+  $("summary").innerHTML =
+    kpi("accent", BASELINE_EVENTS.toLocaleString(), "events scanned") +
+    kpi(found.length ? "warn" : "ok", found.length, "incidents") +
+    kpi(high ? "warn" : "ok", high, "high severity") +
+    kpi("accent", RULES.length + 1, "rules run");
+
+  if (!found.length){
+    $("findings").innerHTML =
+      '<div class="quiet">No incidents detected — a quiet fortnight. ' +
+      'All ' + (RULES.length + 1) + ' detection rules ran and stayed silent.</div>';
+    return;
+  }
+  $("findings").innerHTML = found.map(function(d){
+    var refs = d.refs.map(function(r){ return '<span class="r">' + esc(r) + "</span>"; }).join("");
+    var corr = d.id === CORRELATION.id
+      ? '<span class="pill corr">correlated</span>' : "";
+    return '<div class="f ' + d.sev + '"><div class="stripe"></div><div class="b">' +
+      '<div class="top"><span class="rid">' + d.id + '</span>' +
+      '<span class="title">' + esc(d.title) + "</span>" + corr +
+      '<span class="pill risk">risk ' + d.risk + "</span>" +
+      '<span class="pill ' + d.sev + '">' + d.sev + "</span>" +
+      '<span class="pill gate">awaiting human decision</span></div>' +
+      '<div class="ev">' + esc(d.ev) + "</div>" +
+      '<div class="resp"><b>Recommended response (advisory — never executed)</b>' + esc(d.resp) + "</div>" +
+      '<div class="refs">' + refs + "</div></div></div>";
+  }).join("");
+}
+function kpi(c, v, cap){
+  return '<div class="kpi card"><span class="v ' + c + '">' + v + '</span><span class="cap">' + cap + "</span></div>";
+}
+function setAll(state){
+  for (var i = 0; i < RULES.length; i++){
+    var el = $(RULES[i].key); if (el) el.checked = state;
+  }
+  render();
+}
+$("cfg").addEventListener("change", render);
+$("bad").addEventListener("click", function(){ setAll(true); });
+$("good").addEventListener("click", function(){ setAll(false); });
+setAll(true);
+</script>
+</body>
+</html>

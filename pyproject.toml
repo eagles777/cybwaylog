@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools==70.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cybwaylog"
+version = "0.1.0"
+description = "Cybwaylog - open-source, governed-AI database activity auditor (mock-first, defensive-only, zero-spend)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "V. Vikram" }]
+keywords = ["database", "audit trail", "activity monitoring", "NIST", "MITRE ATT&CK", "AI governance"]
+classifiers = [
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Security",
+]
+# Core runtime is stdlib-only by design (cost control + supply-chain minimalism).
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.3"]
+
+[project.scripts]
+cybwaylog = "cybwaylog.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
