@@ -1,6 +1,6 @@
 # BACKLOG.md
 
-## v1.0 scope (see BUILD_SPEC.md)
+## v1.0 scope — delivered
 
 - [x] Core: synthetic activity log, 14 detection rules, engine, CLI, tamper-evident log, controls, tests
 - [x] AI layer: triage agent, independent checker, human triage gate with expiring exceptions, budget ($0.00 default), red-team suite, eval benchmark (precision/recall + top-1 ranking + alert-fatigue rate)
