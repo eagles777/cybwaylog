@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cybwaylog — Governed-AI Database Activity Auditor</title>
+<meta name="description" content="Open-source, governed-AI database activity auditor: AI triages an audit trail against NIST SP 800-53 and MITRE ATT&CK-mapped rules under independent verification and a human triage gate.">
+<style>
+:root{
+  --ground:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --ink:#0f1a26;
+  --muted:#5a6b7d; --line:#dce2ea; --accent:#0e7fb8;
+  --high:#c0362c; --med:#b0741a; --low:#4a6785; --pass:#1f7a4d;
+  --high-soft:#f8e6e4; --med-soft:#f7edda; --low-soft:#eef1f5; --pass-soft:#e2f1ea;
+}
+@media (prefers-color-scheme:dark){:root{
+  --ground:#0d141d; --surface:#141d28; --surface-2:#1a2634; --ink:#e7eef6;
+  --muted:#93a4b8; --line:#26333f; --accent:#38bdf8;
+  --high:#f2645a; --med:#e0a13c; --low:#8299b8; --pass:#48c98a;
+  --high-soft:#2a1614; --med-soft:#2a2011; --low-soft:#1a2634; --pass-soft:#12271d;}}
+:root[data-theme="dark"]{
+  --ground:#0d141d; --surface:#141d28; --surface-2:#1a2634; --ink:#e7eef6;
+  --muted:#93a4b8; --line:#26333f; --accent:#38bdf8;
+  --high:#f2645a; --med:#e0a13c; --low:#8299b8; --pass:#48c98a;
+  --high-soft:#2a1614; --med-soft:#2a2011; --low-soft:#1a2634; --pass-soft:#12271d;}
+:root[data-theme="light"]{
+  --ground:#eef1f5; --surface:#ffffff; --surface-2:#f6f8fb; --ink:#0f1a26;
+  --muted:#5a6b7d; --line:#dce2ea; --accent:#0e7fb8;
+  --high:#c0362c; --med:#b0741a; --low:#4a6785; --pass:#1f7a4d;
+  --high-soft:#f8e6e4; --med-soft:#f7edda; --low-soft:#eef1f5; --pass-soft:#e2f1ea;}
+*{box-sizing:border-box} body{margin:0}
+.root{--sans:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code",Menlo,Consolas,monospace;
+  background:var(--ground); color:var(--ink); font-family:var(--sans);
+  line-height:1.6; padding:40px 20px 56px; -webkit-font-smoothing:antialiased;}
+.wrap{max-width:900px; margin:0 auto; display:flex; flex-direction:column; gap:38px}
+.label{font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--accent)}
+.card{background:var(--surface); border:1px solid var(--line); border-radius:12px}
+
+/* hero */
+.hero{text-align:center; display:flex; flex-direction:column; gap:14px; align-items:center;
+  padding-bottom:34px; border-bottom:1px solid var(--line)}
+.hero h1{font-size:clamp(34px,6vw,50px); font-weight:700; margin:0; letter-spacing:-.022em}
+.hero .tag{font-size:clamp(16px,2.4vw,19px); font-weight:600; max-width:30ch}
+.hero .lede{color:var(--muted); font-size:15px; max-width:66ch; text-wrap:pretty}
+.badges{display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin-top:2px}
+.badge{font-family:var(--mono); font-size:11px; padding:4px 10px; border-radius:999px;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--muted); white-space:nowrap}
+.badge.ok{color:var(--pass); background:var(--pass-soft); border-color:color-mix(in srgb,var(--pass) 30%,transparent)}
+.badge.ac{color:var(--accent); background:var(--surface-2); border-color:color-mix(in srgb,var(--accent) 35%,transparent)}
+.byline{font-style:italic; color:var(--muted); font-size:13.5px}
+.cta{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:8px}
+.btn{font-size:13.5px; font-weight:600; padding:10px 18px; border-radius:9px; text-decoration:none;
+  border:1px solid var(--line); background:var(--surface-2); color:var(--ink); display:inline-block}
+.btn.p{background:var(--accent); border-color:var(--accent); color:#fff}
+.btn:hover{filter:brightness(1.06)}
+
+/* sections */
+section{display:flex; flex-direction:column; gap:14px}
+h2{font-size:22px; font-weight:670; margin:0; letter-spacing:-.01em}
+h2 .n{font-family:var(--mono); font-size:12px; color:var(--accent); display:block; letter-spacing:.14em;
+  text-transform:uppercase; font-weight:700; margin-bottom:5px}
+p{margin:0; color:var(--ink)} p.m{color:var(--muted); font-size:14.5px}
+
+/* pipeline */
+.flow{display:grid; grid-template-columns:repeat(3,1fr); gap:12px}
+@media (max-width:720px){.flow{grid-template-columns:1fr}}
+.stage{padding:17px; display:flex; flex-direction:column; gap:7px}
+.stage .s{font-family:var(--mono); font-size:11.5px; color:var(--accent); font-weight:700}
+.stage h3{margin:0; font-size:15.5px; font-weight:650}
+.stage p{font-size:13px; color:var(--muted)}
+.stage.gate{border-color:var(--accent)}
+.under{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+@media (max-width:720px){.under{grid-template-columns:1fr}}
+.u{padding:14px 16px; display:flex; gap:12px; align-items:flex-start}
+.u .i{font-family:var(--mono); font-size:17px; flex:none}
+.u.ok .i{color:var(--pass)} .u.rt .i{color:var(--high)}
+.u h4{margin:0 0 2px; font-size:13.5px; font-weight:650}
+.u p{font-size:12.5px; color:var(--muted)}
+
+/* metrics */
+.mets{display:grid; grid-template-columns:repeat(auto-fit,minmax(138px,1fr)); gap:11px}
+.met{padding:16px; display:flex; flex-direction:column; gap:6px}
+.met .v{font-family:var(--mono); font-size:25px; font-weight:700; line-height:1; font-variant-numeric:tabular-nums; color:var(--pass)}
+.met .v.ac{color:var(--accent)}
+.met .c{font-size:12px; color:var(--muted)}
+.callout{padding:13px 16px; border-radius:10px; background:var(--med-soft);
+  border:1px solid color-mix(in srgb,var(--med) 30%,transparent); color:var(--ink); font-size:13.5px}
+.callout b{color:var(--med)}
+
+/* table */
+.tbl{width:100%; border-collapse:collapse; font-size:13.5px; overflow:hidden; border-radius:10px}
+.tbl th{text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--muted); font-weight:700; padding:10px 12px; background:var(--surface-2); border-bottom:1px solid var(--line)}
+.tbl td{padding:9px 12px; border-bottom:1px solid var(--line); background:var(--surface)}
+.tbl tr:last-child td{border-bottom:none}
+.tbl .id{font-family:var(--mono); font-size:12px; color:var(--accent); white-space:nowrap}
+.sv{font-family:var(--mono); font-size:10px; text-transform:uppercase; padding:2px 8px; border-radius:999px; font-weight:700}
+.sv.high{color:var(--high); background:var(--high-soft)}
+.sv.medium{color:var(--med); background:var(--med-soft)}
+.sv.low{color:var(--low); background:var(--low-soft)}
+.scroll{overflow-x:auto; border:1px solid var(--line); border-radius:10px}
+
+/* code + lists */
+pre{margin:0; background:var(--surface-2); border:1px solid var(--line); border-radius:10px;
+  padding:14px 16px; overflow-x:auto; font-family:var(--mono); font-size:12.5px; line-height:1.65; color:var(--ink)}
+pre .c{color:var(--muted)}
+ul{margin:0; padding-left:20px; display:flex; flex-direction:column; gap:7px; font-size:14.5px}
+ul b{font-weight:650}
+.foot{border-top:1px solid var(--line); padding-top:20px; color:var(--muted); font-size:12.5px;
+  display:flex; flex-direction:column; gap:6px; text-align:center}
+.foot b{color:var(--ink)} .foot a{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="root"><div class="wrap">
+
+  <header class="hero">
+    <span class="label">Governed-AI database activity auditor</span>
+    <h1>Cybwaylog</h1>
+    <p class="tag">AI that triages a database's audit trail — and proves it can be trusted.</p>
+    <p class="lede">Cybwaylog reads a database's activity log, detects insider-threat and misuse patterns
+      against public NIST&nbsp;SP&nbsp;800-53 and MITRE&nbsp;ATT&amp;CK-mapped rules, and drafts incident reports with a
+      recommended response — wrapped in a governance architecture where every AI claim is independently
+      re-verified, nothing closes without a logged human decision, and the AI's own accuracy is published.</p>
+    <div class="badges">
+      <span class="badge ac">Apache-2.0</span>
+      <span class="badge ac">Python 3.10+</span>
+      <span class="badge ok">150 tests passing</span>
+      <span class="badge ok">mock mode · $0</span>
+      <span class="badge ok">zero-spend policy</span>
+      <span class="badge">defensive only</span>
+      <span class="badge">synthetic data only</span>
+    </div>
+    <p class="byline">A personal AI-engineering portfolio project by V. Vikram — the activity-auditing
+      sibling of <a href="https://github.com/eagles777/cybwaydb" style="color:var(--accent)">Cybwaydb</a>.</p>
+    <div class="cta">
+      <a class="btn p" href="demo.html">Try the interactive demo</a>
+      <a class="btn" href="https://github.com/eagles777/cybwaylog">View the code</a>
+    </div>
+  </header>
+
+  <section>
+    <h2><span class="n">The problem</span>Two halves of database assurance</h2>
+    <p class="m">Most database security tooling answers <i>“is this database configured correctly?”</i> — a
+      static question. It cannot answer the one that matters during an incident: <i>“is something happening
+      right now that shouldn't be?”</i> Commercial SIEM and UEBA platforms do answer it, but they are closed
+      boxes: you cannot see how their AI decides, and they publish no accuracy figures you can check.</p>
+    <p class="m"><b>Cybwaydb</b> audits configuration (static state). <b>Cybwaylog</b> audits activity
+      (dynamic behavior). Together they cover both halves — and both publish their governance architecture
+      and their measured AI accuracy, so the claims are checkable rather than asserted.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">Architecture</span>Governance, not just a model call</h2>
+    <p class="m">The LLM's role is deliberately bounded: it drafts, it never decides and never acts.</p>
+    <div class="flow">
+      <div class="stage card"><span class="s">STAGE 1</span><h3>Triage Agent</h3>
+        <p>Reads the detected events and drafts an incident report — narrative, affected accounts, and a
+          recommended response — as strict JSON.</p></div>
+      <div class="stage card"><span class="s">STAGE 2</span><h3>Independent Checker</h3>
+        <p>Re-derives the truth from the raw audit rows and adjudicates PASS / REVIEW / QUARANTINE.
+          Hallucinated accounts and injected instructions are quarantined. It never grades its own generation.</p></div>
+      <div class="stage card gate"><span class="s">STAGE 3</span><h3>Human Triage Gate</h3>
+        <p>A person confirms, dismisses as a false positive, escalates, or files an expiring exception
+          (NIST CA-5 style). Nothing closes without a logged human decision.</p></div>
+    </div>
+    <div class="under">
+      <div class="u card ok"><span class="i">&#10003;</span><div>
+        <h4>Tamper-evident audit log</h4>
+        <p>Every decision is chained to the SHA-256 of the previous entry; any edit, deletion, or reordering
+          is detected. A SHA-256 manifest covers the run's outputs.</p></div></div>
+      <div class="u card rt"><span class="i">&#9888;</span><div>
+        <h4>Red-teamed against itself</h4>
+        <p>18 OWASP LLM Top 10-mapped injection, jailbreak, and exfiltration patterns — plus an injection
+          canary planted in the log data itself. All quarantined.</p></div></div>
+    </div>
+    <p class="m"><b>There is no execute path anywhere in the codebase.</b> Recommended responses are advisory;
+      the dry-run always reports <code>executed=False</code>.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">Measured, not claimed</span>Published AI accuracy</h2>
+    <p class="m">Scored against deterministic ground truth — the rule engine on the same synthetic trail.
+      The agent never sees the answer key.</p>
+    <div class="mets">
+      <div class="met card"><span class="v">0.998</span><span class="c">precision<br>(few false alarms)</span></div>
+      <div class="met card"><span class="v">0.896</span><span class="c">recall<br>(incidents caught)</span></div>
+      <div class="met card"><span class="v">0.944</span><span class="c">F1<br>(balance)</span></div>
+      <div class="met card"><span class="v ac">0.78</span><span class="c">top-1 triage ranking<br>(worst one first)</span></div>
+      <div class="met card"><span class="v ac">0.0098</span><span class="c">false alerts<br>per 1,000 events</span></div>
+    </div>
+    <p class="m">The last two matter operationally. Accuracy alone doesn't tell an analyst <i>what to look at
+      first</i>, and a tool that is accurate but noisy at scale gets ignored — so both are measured explicitly.</p>
+    <div class="callout"><b>Honest scope:</b> these are mock-provider numbers over 50 seeded runs. They
+      validate the measurement harness itself; they are not a claim about any commercial model's performance.
+      No live-model run has been performed for this project yet, and the repository says so plainly.</div>
+  </section>
+
+  <section>
+    <h2><span class="n">Detection coverage</span>14 rules, every one cited</h2>
+    <p class="m">Each rule cites NIST SP 800-53 controls and MITRE ATT&amp;CK technique IDs, builds its evidence
+      only from raw rows, and carries an advisory response.</p>
+    <div class="scroll"><table class="tbl">
+      <thead><tr><th>Rule</th><th>Detection</th><th>Severity</th></tr></thead>
+      <tbody>
+        <tr><td class="id">CYL-001</td><td>Off-hours logon by a privileged (DBA) account</td><td><span class="sv medium">medium</span></td></tr>
+        <tr><td class="id">CYL-002</td><td>Failed-logon burst (≥5 failures in 10 minutes)</td><td><span class="sv medium">medium</span></td></tr>
+        <tr><td class="id">CYL-003</td><td>New administrative grant or privilege-grant spike</td><td><span class="sv high">high</span></td></tr>
+        <tr><td class="id">CYL-004</td><td>Mass data export (rows far above the account's baseline)</td><td><span class="sv high">high</span></td></tr>
+        <tr><td class="id">CYL-005</td><td>Dormant account reactivated (&gt;60 days idle)</td><td><span class="sv medium">medium</span></td></tr>
+        <tr><td class="id">CYL-006</td><td>Audit-policy tampering (policy disabled)</td><td><span class="sv high">high</span></td></tr>
+        <tr><td class="id">CYL-007</td><td>High-privilege action by a non-DBA account</td><td><span class="sv high">high</span></td></tr>
+        <tr><td class="id">CYL-008</td><td>Logon from a never-before-seen host</td><td><span class="sv medium">medium</span></td></tr>
+        <tr><td class="id">CYL-009</td><td>Schema change (DDL) outside an approved change window</td><td><span class="sv low">low</span></td></tr>
+        <tr><td class="id">CYL-010</td><td>Repeated access to a sensitive object by a non-owner</td><td><span class="sv medium">medium</span></td></tr>
+        <tr><td class="id">CYL-011</td><td>Per-account session-count anomaly</td><td><span class="sv low">low</span></td></tr>
+        <tr><td class="id">CYL-012</td><td>Activity with no matching logon session</td><td><span class="sv high">high</span></td></tr>
+        <tr><td class="id">CYL-013</td><td>Service account used interactively by a person</td><td><span class="sv medium">medium</span></td></tr>
+        <tr><td class="id">CYL-014</td><td><b>Correlation:</b> mass export followed by audit-off within an hour</td><td><span class="sv high">high</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="m">CYL-014 is the interesting one: neither half is conclusive alone, but exfiltration followed by
+      covering the tracks is a pattern worth waking someone up for — so it carries the highest risk score and
+      should rank first. That is exactly what the top-1 ranking metric measures.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">Try it</span>Quick start</h2>
+    <pre><span class="c"># everything below runs offline, with no API key and no cost</span>
+pip install -e ".[dev]"
+pytest                                   <span class="c"># 150 tests, all offline, $0</span>
+
+cybwaylog init-log --out mylog.sqlite    <span class="c"># a synthetic trail you can edit</span>
+cybwaylog scan --db mylog.sqlite --out runs/latest
+cybwaylog scan --clean --out runs/quiet  <span class="c"># quiet fortnight → zero detections</span>
+
+cybwaylog report --run-dir runs/latest --out report.html
+cybwaylog verify --run-dir runs/latest   <span class="c"># check hash chain + manifest</span>
+cybwaylog benchmark --runs 50 --seed 42  <span class="c"># accuracy + ranking + alert fatigue</span>
+cybwaylog redteam                        <span class="c"># prove the injection canary is caught</span></pre>
+  </section>
+
+  <section>
+    <h2><span class="n">Safety</span>Scope and guarantees</h2>
+    <ul>
+      <li><b>Defensive only.</b> No offensive or exploit code. “Red-team” here means self-testing this tool
+        against published OWASP LLM Top 10 patterns.</li>
+      <li><b>Synthetic data only.</b> Every user, host, address, and event was generated for testing. No real
+        database, log, credential, or organizational data exists in the repository.</li>
+      <li><b>No execute path.</b> Recommended responses are advisory, and nothing resolves without a logged
+        human decision.</li>
+      <li><b>Zero-spend by policy.</b> The budget ceiling defaults to <code>$0.00</code> and is checked before
+        any call. A live run would require a free-tier key with no billing attached; an exhausted quota stops
+        the run rather than falling back to anything paid.</li>
+      <li><b>Data minimization.</b> Only event metadata would ever reach a model — never free-text fields,
+        never credentials.</li>
+    </ul>
+  </section>
+
+  <footer class="foot">
+    <span>NIST SP 800-53 and the NIST AI RMF are public-domain US Government works, cited by control ID.
+      MITRE ATT&amp;CK&reg; technique IDs are referenced with attribution to The MITRE Corporation.
+      OWASP LLM Top 10 category names are referenced with attribution to the OWASP Foundation.</span>
+    <span>A personal portfolio project by <b>V. Vikram</b> · Apache-2.0 · Defensive security only ·
+      <a href="https://github.com/eagles777/cybwaylog">github.com/eagles777/cybwaylog</a></span>
+  </footer>
+
+</div></div>
+</body>
+</html>
