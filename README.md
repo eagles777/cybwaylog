@@ -8,7 +8,7 @@ recommended response — under independent verification, a human triage gate, an
 <p align="center">
 <img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache_2.0-0e7fb8">
 <img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-0e7fb8">
-<img alt="Tests: 150 passing" src="https://img.shields.io/badge/tests-150_passing-1f7a4d">
+<img alt="Tests: 156 passing" src="https://img.shields.io/badge/tests-156_passing-1f7a4d">
 <img alt="Default: mock mode $0" src="https://img.shields.io/badge/default-mock_mode_%240-1f7a4d">
 <img alt="Zero spend" src="https://img.shields.io/badge/policy-zero_spend-1f7a4d">
 <img alt="Defensive security only" src="https://img.shields.io/badge/scope-defensive_only-4a6785">
@@ -104,13 +104,25 @@ evidence built only from raw rows and an advisory response:
 Plus: synthetic 14-day activity generator with seeded incidents and an **injection canary**;
 triage + independent checker agents; human gate with **expiring** NIST CA-5-style exceptions;
 tamper-evident hash-chained audit log + SHA-256 manifest; 18-pattern OWASP LLM red-team suite;
-eval benchmark; HTML timeline report; policy-lint + secret-scan controls; **150 tests**, $0 CI.
+eval benchmark; HTML timeline report; policy-lint + secret-scan controls; **156 tests**, $0 CI.
+
+## See the correlation rule work — one command
+
+```bash
+python examples/insider_threat_walkthrough.py
+```
+
+Starts from a clean two-week trail (**zero detections**), injects three hand-written rows — an
+off-hours DBA logon, a 1.2M-row export of a salary table, and logon auditing switched off 22 minutes
+later — and re-scans. Each signal is explainable alone; together they rank **CYL-014 first**, above
+the individually-severe events that compose it. Offline, no key, ~2 seconds. Its claims are asserted
+in `tests/test_walkthrough.py`, so the demo cannot drift from what the rules actually do.
 
 ## Quick start
 
 ```bash
 pip install -e ".[dev]"
-pytest                                        # 150 tests, all offline, $0
+pytest                                        # 156 tests, all offline, $0
 
 cybwaylog init-log --out mylog.sqlite         # export a synthetic trail you can edit
 cybwaylog scan --db mylog.sqlite --out runs/latest   # scan your own trail

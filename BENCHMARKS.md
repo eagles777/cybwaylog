@@ -62,7 +62,7 @@ as was done in the sibling project Cybwaydb.
 ```bash
 pip install -e ".[dev]"
 cybwaylog benchmark --runs 50 --seed 42     # the table above
-pytest -q                                    # 150 tests, offline
+pytest -q                                    # 156 tests, offline
 cybwaylog scan --out runs/latest && cybwaylog verify --run-dir runs/latest
 ```
 
