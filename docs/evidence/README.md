@@ -16,10 +16,13 @@ cybwaylog benchmark --runs 50 --seed 42
 Under the project's zero-spend policy (free-tier key, no billing attached, `$0.00` budget ceiling
 checked before every call), a live run writes:
 
-- `live-run/live_benchmark.json` — precision, recall, F1, top-1 ranking accuracy, alert-fatigue rate
-- `live-run/audit.log.jsonl` — a tamper-evident, hash-chained log of the run; any edit, deletion, or
+A live-run directory would be created here containing three files, **none of which exist yet**
+because no live run has been performed:
+
+- a live_benchmark.json — precision, recall, F1, top-1 ranking accuracy, alert-fatigue rate
+- an audit.log.jsonl — a tamper-evident, hash-chained log of the run; any edit, deletion, or
   reordering breaks the chain and is detected by `cybwaylog verify`
-- `live-run/manifest.json` — SHA-256 of every output file
+- a manifest.json — SHA-256 of every output file
 
 No API key, credential, or personal data appears in these artifacts — only event metadata and scores.
 Anyone can re-verify the chain without a key:
